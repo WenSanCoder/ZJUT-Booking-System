@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: zjut-booking-system
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://localhost:3306/zjut_booking
+#    username: root
+#    password: 315876
+    #云数据库↓
+    url: jdbc:mysql:// x6.sjcmc.cn:34095/zjut_booking
+    username: remote_user
+    password: "@Sht20051229"
+mybatis-plus:
+  mapper-locations: classpath:/mapper/*.xml
+  type-aliases-package: com.rainbowmaodie.zjutbookingsystem.entity
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
