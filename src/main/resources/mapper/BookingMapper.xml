@@ -24,11 +24,23 @@
             <if test="endDate != null and endDate != ''">
                 AND b.start_time &lt;= #{endDate}
             </if>
-            <if test="buildingIds != null and buildingIds.size() > 0">
-                AND v.building_id IN
-                <foreach collection="buildingIds" item="id" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
+            <if test="(buildingIds != null and buildingIds.size() > 0) or (venueIds != null and venueIds.size() > 0)">
+                AND (
+                <trim prefixOverrides="OR">
+                    <if test="buildingIds != null and buildingIds.size() > 0">
+                        v.building_id IN
+                        <foreach collection="buildingIds" item="id" open="(" separator="," close=")">
+                            #{id}
+                        </foreach>
+                    </if>
+                    <if test="venueIds != null and venueIds.size() > 0">
+                        OR b.venue_id IN
+                        <foreach collection="venueIds" item="id" open="(" separator="," close=")">
+                            #{id}
+                        </foreach>
+                    </if>
+                </trim>
+                )
             </if>
         </where>
         ORDER BY b.created_at DESC

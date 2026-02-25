@@ -26,6 +26,42 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <el-row :gutter="20" class="mt-20">
+      <el-col :span="24">
+        <el-card header="系统公告">
+          <el-table :data="announcements" stripe style="width: 100%">
+            <el-table-column prop="title" label="标题" />
+            <el-table-column prop="type" label="类型" width="100">
+              <template #default="scope">
+                <el-tag :type="scope.row.type === 'URGENT' ? 'danger' : 'success'">
+                  {{ scope.row.type === 'URGENT' ? '紧急' : '普通' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createdAt" label="发布时间" width="180">
+              <template #default="scope">
+                {{ scope.row.createdAt?.replace('T', ' ').substring(0, 19) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="100">
+              <template #default="scope">
+                <el-button link type="primary" @click="viewAnnouncement(scope.row)">查看</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-dialog v-model="viewVisible" :title="currentAnnouncement?.title" width="50%">
+      <div class="announcement-content">{{ currentAnnouncement?.content }}</div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="viewVisible = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -33,6 +69,7 @@
 import { ref, onMounted } from 'vue';
 import * as echarts from 'echarts';
 import { Calendar, User, Warning, Memo } from '@element-plus/icons-vue';
+import { getLatestAnnouncements } from '@/api/announcement';
 
 const statsCards = ref([
   { title: '今日预约场次', value: 128, icon: Calendar, color: '#409EFF' },
@@ -41,11 +78,32 @@ const statsCards = ref([
   { title: '待办审批数', value: '03', icon: Memo, color: '#E6A23C' }
 ]);
 
+const announcements = ref<any[]>([]);
+const viewVisible = ref(false);
+const currentAnnouncement = ref<any>(null);
+
+const fetchAnnouncements = async () => {
+  try {
+    const res: any = await getLatestAnnouncements({ limit: 5 });
+    if (res.code === 200) {
+      announcements.value = res.data;
+    }
+  } catch (error) {
+    console.error('Failed to fetch announcements', error);
+  }
+};
+
+const viewAnnouncement = (row: any) => {
+  currentAnnouncement.value = row;
+  viewVisible.value = true;
+};
+
 const lineChartRef = ref<HTMLElement | null>(null);
 const pieChartRef = ref<HTMLElement | null>(null);
 
 onMounted(() => {
   initCharts();
+  fetchAnnouncements();
 });
 
 const initCharts = () => {
@@ -108,5 +166,12 @@ const initCharts = () => {
 }
 .chart-box {
   height: 350px;
+}
+.mt-20 {
+  margin-top: 20px;
+}
+.announcement-content {
+  white-space: pre-wrap;
+  line-height: 1.6;
 }
 </style>

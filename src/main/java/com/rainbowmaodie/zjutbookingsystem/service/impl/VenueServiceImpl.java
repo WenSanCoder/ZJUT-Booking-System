@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.rainbowmaodie.zjutbookingsystem.entity.Booking;
+import com.rainbowmaodie.zjutbookingsystem.entity.Building;
 import com.rainbowmaodie.zjutbookingsystem.entity.User;
 import com.rainbowmaodie.zjutbookingsystem.entity.Venue;
-import com.rainbowmaodie.zjutbookingsystem.entity.VenueAdminBuilding;
-import com.rainbowmaodie.zjutbookingsystem.mapper.VenueAdminBuildingMapper;
+import com.rainbowmaodie.zjutbookingsystem.entity.VenueAdminPermission;
+import com.rainbowmaodie.zjutbookingsystem.mapper.BuildingMapper;
+import com.rainbowmaodie.zjutbookingsystem.mapper.VenueAdminPermissionMapper;
 import com.rainbowmaodie.zjutbookingsystem.mapper.VenueMapper;
 import com.rainbowmaodie.zjutbookingsystem.service.BookingService;
 import com.rainbowmaodie.zjutbookingsystem.service.NotificationService;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,27 +38,68 @@ public class VenueServiceImpl extends ServiceImpl<VenueMapper, Venue> implements
     private NotificationService notificationService;
 
     @Autowired
-    private VenueAdminBuildingMapper venueAdminBuildingMapper;
+    private VenueAdminPermissionMapper venueAdminPermissionMapper;
+
+    @Autowired
+    private BuildingMapper buildingMapper;
 
     @Override
-    public Page<Venue> getVenuePage(Page<Venue> page, String name, Long adminId) {
+    public Page<Venue> getVenuePage(Page<Venue> page, String name, Long buildingId, Long adminId) {
         LambdaQueryWrapper<Venue> queryWrapper = new LambdaQueryWrapper<>();
         if (name != null && !name.isEmpty()) {
             queryWrapper.like(Venue::getName, name);
         }
+        if (buildingId != null) {
+            queryWrapper.eq(Venue::getBuildingId, buildingId);
+        }
 
         User user = userService.getById(adminId);
         if (user != null && "VENUE_ADMIN".equals(user.getRole())) {
-            // 只查询管辖范围内的楼宇
-            List<Long> buildingIds = venueAdminBuildingMapper.selectList(
-                    new LambdaQueryWrapper<VenueAdminBuilding>().eq(VenueAdminBuilding::getUserId, adminId)
-            ).stream().map(VenueAdminBuilding::getBuildingId).collect(Collectors.toList());
-            
-            if (buildingIds.isEmpty()) {
-                // 如果没有分配楼宇，返回空分页
-                return page;
+            // 查询权限
+            List<VenueAdminPermission> permissions = venueAdminPermissionMapper.selectList(
+                    new LambdaQueryWrapper<VenueAdminPermission>().eq(VenueAdminPermission::getUserId, adminId)
+            );
+
+            if (permissions.isEmpty()) return page;
+
+            List<Long> venueIds = new ArrayList<>();
+            List<Long> buildingIds = new ArrayList<>();
+            List<String> campuses = new ArrayList<>();
+
+            for (VenueAdminPermission p : permissions) {
+                if ("VENUE".equals(p.getTargetType())) {
+                    try { venueIds.add(Long.valueOf(p.getTargetId())); } catch (Exception e) {}
+                } else if ("BUILDING".equals(p.getTargetType())) {
+                    try { buildingIds.add(Long.valueOf(p.getTargetId())); } catch (Exception e) {}
+                } else if ("CAMPUS".equals(p.getTargetType())) {
+                    campuses.add(p.getTargetId());
+                }
             }
-            queryWrapper.in(Venue::getBuildingId, buildingIds);
+
+            // 校区权限转换为楼宇权限
+            if (!campuses.isEmpty()) {
+                buildingIds.addAll(
+                    buildingMapper.selectList(new LambdaQueryWrapper<Building>().in(Building::getLocation, campuses))
+                        .stream().map(Building::getId).collect(Collectors.toList())
+                );
+            }
+
+            // 合并查询
+            if (venueIds.isEmpty() && buildingIds.isEmpty()) {
+                return new Page<>();
+            }
+
+            queryWrapper.and(w -> {
+                boolean hasCondition = false;
+                if (!venueIds.isEmpty()) {
+                    w.in(Venue::getId, venueIds);
+                    hasCondition = true;
+                }
+                if (!buildingIds.isEmpty()) {
+                    if (hasCondition) w.or().in(Venue::getBuildingId, buildingIds);
+                    else w.in(Venue::getBuildingId, buildingIds);
+                }
+            });
         }
 
         queryWrapper.orderByDesc(Venue::getCreatedAt);

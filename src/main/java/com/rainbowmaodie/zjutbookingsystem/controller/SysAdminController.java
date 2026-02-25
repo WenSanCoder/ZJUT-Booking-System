@@ -6,16 +6,18 @@ import com.rainbowmaodie.zjutbookingsystem.common.Result;
 import com.rainbowmaodie.zjutbookingsystem.entity.Announcement;
 import com.rainbowmaodie.zjutbookingsystem.entity.Building;
 import com.rainbowmaodie.zjutbookingsystem.entity.User;
-import com.rainbowmaodie.zjutbookingsystem.entity.VenueAdminBuilding;
+import com.rainbowmaodie.zjutbookingsystem.entity.VenueAdminPermission;
 import com.rainbowmaodie.zjutbookingsystem.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sys")
+@CrossOrigin
 public class SysAdminController {
 
     @Autowired
@@ -25,7 +27,7 @@ public class SysAdminController {
     private BuildingService buildingService;
 
     @Autowired
-    private VenueAdminBuildingService venueAdminBuildingService;
+    private VenueAdminPermissionService venueAdminPermissionService;
 
     @Autowired
     private AnnouncementService announcementService;
@@ -38,10 +40,14 @@ public class SysAdminController {
     public Result<Page<User>> getUserPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String role) {
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
-            queryWrapper.like(User::getUsername, keyword).or().like(User::getRealName, keyword);
+            queryWrapper.and(w -> w.like(User::getUsername, keyword).or().like(User::getRealName, keyword));
+        }
+        if (role != null && !role.isEmpty()) {
+            queryWrapper.eq(User::getRole, role);
         }
         return Result.success(userService.page(new Page<>(current, size), queryWrapper));
     }
@@ -85,35 +91,33 @@ public class SysAdminController {
         return Result.success("删除成功");
     }
 
+    // --- 权限管理 ---
     @GetMapping("/permissions/{adminId}")
-    public Result<List<VenueAdminBuilding>> getAdminPermissions(@PathVariable Long adminId) {
-        return Result.success(venueAdminBuildingService.list(
-                new LambdaQueryWrapper<VenueAdminBuilding>().eq(VenueAdminBuilding::getUserId, adminId)
+    public Result<List<VenueAdminPermission>> getAdminPermissions(@PathVariable Long adminId) {
+        return Result.success(venueAdminPermissionService.list(
+                new LambdaQueryWrapper<VenueAdminPermission>().eq(VenueAdminPermission::getUserId, adminId)
         ));
     }
 
     @PostMapping("/permissions/assign")
     public Result<String> assignPermission(@RequestBody Map<String, Object> data) {
         Long adminId = Long.valueOf(data.get("adminId").toString());
-        List<Integer> buildingIds = (List<Integer>) data.get("buildingIds");
+        List<Map<String, String>> permissions = (List<Map<String, String>>) data.get("permissions");
         
-        // 先删除旧的
-        venueAdminBuildingService.remove(new LambdaQueryWrapper<VenueAdminBuilding>().eq(VenueAdminBuilding::getUserId, adminId));
+        // 先删除该管理员的所有旧权限
+        venueAdminPermissionService.remove(new LambdaQueryWrapper<VenueAdminPermission>()
+                .eq(VenueAdminPermission::getUserId, adminId));
         
-        // 插入新的
-        for (Integer bId : buildingIds) {
-            VenueAdminBuilding vab = new VenueAdminBuilding();
-            vab.setUserId(adminId);
-            vab.setBuildingId(Long.valueOf(bId));
-            venueAdminBuildingService.save(vab);
+        // 批量插入新的层级化权限 (校区/楼宇/场地)
+        if (permissions != null && !permissions.isEmpty()) {
+            for (Map<String, String> p : permissions) {
+                VenueAdminPermission vap = new VenueAdminPermission();
+                vap.setUserId(adminId);
+                vap.setTargetType(p.get("targetType"));
+                vap.setTargetId(p.get("targetId"));
+                venueAdminPermissionService.save(vap);
+            }
         }
         return Result.success("分配成功");
-    }
-
-    // --- 公告管理 ---
-    @PostMapping("/announcements/publish")
-    public Result<String> publishAnnouncement(@RequestBody Announcement announcement) {
-        announcementService.save(announcement);
-        return Result.success("发布成功");
     }
 }

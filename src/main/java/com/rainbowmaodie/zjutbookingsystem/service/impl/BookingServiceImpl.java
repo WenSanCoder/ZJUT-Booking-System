@@ -5,15 +5,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.rainbowmaodie.zjutbookingsystem.entity.Booking;
 import com.rainbowmaodie.zjutbookingsystem.entity.User;
-import com.rainbowmaodie.zjutbookingsystem.entity.VenueAdminBuilding;
+import com.rainbowmaodie.zjutbookingsystem.entity.VenueAdminPermission;
+import com.rainbowmaodie.zjutbookingsystem.entity.Building;
 import com.rainbowmaodie.zjutbookingsystem.mapper.BookingMapper;
-import com.rainbowmaodie.zjutbookingsystem.mapper.VenueAdminBuildingMapper;
+import com.rainbowmaodie.zjutbookingsystem.mapper.VenueAdminPermissionMapper;
+import com.rainbowmaodie.zjutbookingsystem.mapper.BuildingMapper;
 import com.rainbowmaodie.zjutbookingsystem.service.BookingService;
 import com.rainbowmaodie.zjutbookingsystem.service.UserService;
 import com.rainbowmaodie.zjutbookingsystem.vo.BookingVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,24 +28,54 @@ public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> impl
     private UserService userService;
 
     @Autowired
-    private VenueAdminBuildingMapper venueAdminBuildingMapper;
+    private VenueAdminPermissionMapper venueAdminPermissionMapper;
+
+    @Autowired
+    private BuildingMapper buildingMapper;
 
     @Override
     public Page<BookingVO> getBookingPage(Page<Booking> page, String applicant, String status, String startDate, String endDate, Long userId) {
-        List<Long> buildingIds = null;
+        List<Long> buildingIds = new ArrayList<>();
+        List<Long> venueIds = new ArrayList<>();
+        
         if (userId != null) {
             User user = userService.getById(userId);
             if (user != null && "VENUE_ADMIN".equals(user.getRole())) {
-                buildingIds = venueAdminBuildingMapper.selectList(
-                        new LambdaQueryWrapper<VenueAdminBuilding>().eq(VenueAdminBuilding::getUserId, userId)
-                ).stream().map(VenueAdminBuilding::getBuildingId).collect(Collectors.toList());
+                List<VenueAdminPermission> permissions = venueAdminPermissionMapper.selectList(
+                        new LambdaQueryWrapper<VenueAdminPermission>().eq(VenueAdminPermission::getUserId, userId)
+                );
                 
-                if (buildingIds.isEmpty()) {
+                if (permissions.isEmpty()) {
                     return new Page<BookingVO>();
+                }
+
+                List<String> campuses = new ArrayList<>();
+                for (VenueAdminPermission p : permissions) {
+                    try {
+                        if ("VENUE".equals(p.getTargetType())) venueIds.add(Long.valueOf(p.getTargetId()));
+                        else if ("BUILDING".equals(p.getTargetType())) buildingIds.add(Long.valueOf(p.getTargetId()));
+                        else if ("CAMPUS".equals(p.getTargetType())) campuses.add(p.getTargetId());
+                    } catch (NumberFormatException e) {
+                        // 忽略格式错误的ID
+                    }
+                }
+
+                if (!campuses.isEmpty()) {
+                    buildingIds.addAll(
+                        buildingMapper.selectList(new LambdaQueryWrapper<Building>().in(Building::getLocation, campuses))
+                            .stream().map(Building::getId).collect(Collectors.toList())
+                    );
+                }
+
+                if (venueIds.isEmpty() && buildingIds.isEmpty()) {
+                    return new Page<BookingVO>(page.getCurrent(), page.getSize());
                 }
             }
         }
-        return this.baseMapper.selectBookingVOPage(page, applicant, status, startDate, endDate, buildingIds);
+        
+        List<Long> finalBuildingIds = buildingIds.isEmpty() ? null : buildingIds;
+        List<Long> finalVenueIds = venueIds.isEmpty() ? null : venueIds;
+        return this.baseMapper.selectBookingVOPage(page, applicant, status, startDate, endDate, finalBuildingIds, finalVenueIds);
     }
 
     @Override

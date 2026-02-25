@@ -23,9 +23,10 @@ public class VenueController {
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String name,
+            @RequestParam(required = false) Long buildingId,
             @RequestParam(required = false) Long userId) {
         Page<Venue> page = new Page<>(current, size);
-        return Result.success(venueService.getVenuePage(page, name, userId));
+        return Result.success(venueService.getVenuePage(page, name, buildingId, userId));
     }
 
     @PostMapping("/save")
