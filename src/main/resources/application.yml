@@ -10,7 +10,7 @@ spring:
 #    username: root
 #    password: 315876
     #云数据库↓
-    url: jdbc:mysql:// x6.sjcmc.cn:34095/zjut_booking
+    url: jdbc:mysql://x6.sjcmc.cn:34095/zjut_booking
     username: remote_user
     password: "@Sht20051229"
 mybatis-plus:

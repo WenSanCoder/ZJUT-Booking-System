@@ -16,5 +16,6 @@ public interface BookingMapper extends BaseMapper<Booking> {
                                        @Param("status") String status,
                                        @Param("startDate") String startDate,
                                        @Param("endDate") String endDate,
-                                       @Param("buildingIds") List<Long> buildingIds);
+                                       @Param("buildingIds") List<Long> buildingIds,
+                                       @Param("venueIds") List<Long> venueIds);
 }

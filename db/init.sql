@@ -92,18 +92,21 @@ CREATE TABLE `venue_lock` (
                               PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='场地锁定/维护时间段表';
 
--- 插入测试账号
-INSERT INTO `user` (`username`, `real_name`, `password`, `role`) VALUES
-                                                                     ('10001', '系统管理员', '123456', 'SYS_ADMIN'),
-                                                                     ('20001', '场地管理员', '123456', 'VENUE_ADMIN'),
-                                                                     ('30001', '学生测试张三', '123456', 'STUDENT');
+CREATE TABLE `venue_admin_permission` (
+                                          `id` bigint(20) NOT NULL AUTO_INCREMENT,
+                                          `user_id` bigint(20) NOT NULL COMMENT '管理员用户ID',
+                                          `target_type` varchar(20) NOT NULL COMMENT '权限目标类型: CAMPUS, BUILDING, VENUE',
+                                          `target_id` varchar(64) NOT NULL COMMENT '目标ID (校区名, 楼宇ID, 或场地ID)',
+                                          `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+                                          PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='场地管理员权限表';
 
 CREATE TABLE `announcement` (
                                 `id` bigint(20) NOT NULL AUTO_INCREMENT,
                                 `title` varchar(128) NOT NULL COMMENT '标题',
                                 `content` text NOT NULL COMMENT '内容',
                                 `type` varchar(20) DEFAULT 'NORMAL' COMMENT '类型 NORMAL, URGENT',
-                                `published_by` bigint(20) NOT NULL COMMENT '发布人ID',
+                                `published_by` bigint(20) DEFAULT NULL COMMENT '发布者ID',
                                 `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                                 `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                                 PRIMARY KEY (`id`)
@@ -115,6 +118,11 @@ INSERT INTO `building` (`name`, `location`) VALUES
 ('博易楼', '屏峰校区'),
 ('西侧体育馆', '西侧场馆区');
 
+-- 插入一些初始公告数据
+INSERT INTO `announcement` (`title`, `content`, `type`, `published_by`) VALUES 
+('系统上线通知', '欢迎使用本校场地预约系统，现已进入试运行阶段。', 'NORMAL', 1),
+('场地维护公告', '本周末西侧体育馆将进行地面维护，暂停开放。', 'URGENT', 1);
+
 -- 插入一些初始场地数据
 INSERT INTO `venue` (`name`, `building_id`, `type`, `location`, `capacity`, `equipment`) VALUES
 ('存中楼二楼会议室', 1, '会议室', '201室', 50, '投影仪, 麦克风'),
@@ -123,3 +131,7 @@ INSERT INTO `venue` (`name`, `building_id`, `type`, `location`, `capacity`, `equ
 
 -- 分配场地管理员管辖范围 (工号20001 管理 存中楼)
 INSERT INTO `venue_admin_building` (`user_id`, `building_id`) VALUES (2, 1);
+-- 插入测试用户数据 (默认密码均为 123456)
+INSERT INTO `user` (`username`, `real_name`, `role`, `phone`, `email`) VALUES
+                                                                           ('admin001', '系统管理员', 'SYS_ADMIN', '13800000001', 'admin@zjut.edu.cn'),
+                                                                           ('manager001', '场地管理员', 'VENUE_ADMIN', '13800000002', 'manager@zjut.edu.cn');

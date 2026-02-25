@@ -80,13 +80,17 @@
       </template>
     </el-dialog>
 
-    <!-- 管辖范围设置弹窗 -->
-    <el-dialog v-model="permVisible" title="设置管辖楼宇" width="400px">
-      <el-checkbox-group v-model="selectedBuildings">
-        <el-checkbox v-for="b in buildings" :key="b.id" :label="b.id">
-          {{ b.name }} ({{ b.location }})
-        </el-checkbox>
-      </el-checkbox-group>
+    <!-- 权限分配弹窗 -->
+    <el-dialog v-model="permVisible" title="分配管理权限" width="600px">
+      <el-alert title="可以分配校区、楼宇或具体教室的权限" type="info" show-icon :closable="false" style="margin-bottom: 15px;" />
+      <el-tree
+        ref="treeRef"
+        :data="permissionTree"
+        show-checkbox
+        node-key="id"
+        :default-checked-keys="checkedPermissionKeys"
+        :props="{ label: 'label', children: 'children' }"
+      />
       <template #footer>
         <el-button @click="permVisible = false">取消</el-button>
         <el-button type="primary" @click="submitPerm">保存分配</el-button>
@@ -96,14 +100,57 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, nextTick } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { getUserPage, saveUser, deleteUser, notifyUser, getBuildingList, getAdminPermissions, assignPermissions } from '@/api/sys';
+import { getVenuePage } from '@/api/admin';
 
 const users = ref<any[]>([]);
 const total = ref(0);
 const loading = ref(false);
 const buildings = ref<any[]>([]);
+const permissionTree = ref<any[]>([]);
+const treeRef = ref<any>(null);
+const checkedPermissionKeys = ref<any[]>([]);
+
+const campuses = ['朝晖校区', '屏峰校区', '莫干山校区', '之江学院'];
+
+const buildPermissionTree = async () => {
+  const tree: any[] = [];
+  const bRes: any = await getBuildingList();
+  const vRes: any = await getVenuePage({ size: 1000 }); // 获取所有场地
+  
+  const allBuildings = bRes.data || [];
+  const allVenues = vRes.data.records || [];
+
+  campuses.forEach(campus => {
+    const campusNode = {
+      id: `CAMPUS:${campus}`,
+      label: campus,
+      children: [] as any[]
+    };
+
+    allBuildings.filter((b: any) => b.location === campus).forEach((b: any) => {
+      const buildingNode = {
+        id: `BUILDING:${b.id}`,
+        label: b.name,
+        children: [] as any[]
+      };
+
+      allVenues.filter((v: any) => v.buildingId === b.id).forEach((v: any) => {
+        buildingNode.children.push({
+          id: `VENUE:${v.id}`,
+          label: v.name
+        });
+      });
+
+      campusNode.children.push(buildingNode);
+    });
+
+    tree.push(campusNode);
+  });
+  permissionTree.value = tree;
+};
 
 const queryParams = reactive({
   current: 1,
@@ -190,22 +237,33 @@ const submitNotify = async () => {
 
 const permVisible = ref(false);
 const currentAdminId = ref(0);
-const selectedBuildings = ref<any[]>([]);
 const handlePermission = async (row: any) => {
   currentAdminId.value = row.id;
+  await buildPermissionTree();
   const res: any = await getAdminPermissions(row.id);
   if (res.code === 200) {
-    selectedBuildings.value = res.data.map((item: any) => item.buildingId);
+    checkedPermissionKeys.value = res.data.map((p: any) => `${p.targetType}:${p.targetId}`);
     permVisible.value = true;
+    nextTick(() => {
+      if (treeRef.value) {
+        treeRef.value.setCheckedKeys(checkedPermissionKeys.value);
+      }
+    });
   }
 };
 const submitPerm = async () => {
+  const nodes = treeRef.value.getCheckedNodes(false, true); // 获取全选和半选节点
+  const permissions = nodes.map((node: any) => {
+    const [type, id] = node.id.split(':');
+    return { targetType: type, targetId: id };
+  });
+  
   const res: any = await assignPermissions({
     adminId: currentAdminId.value,
-    buildingIds: selectedBuildings.value
+    permissions: permissions
   });
   if (res.code === 200) {
-    ElMessage.success('管辖范围分配成功');
+    ElMessage.success('权限分配成功');
     permVisible.value = false;
   }
 };

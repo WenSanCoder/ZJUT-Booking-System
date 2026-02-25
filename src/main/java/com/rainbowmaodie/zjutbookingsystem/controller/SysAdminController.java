@@ -6,16 +6,18 @@ import com.rainbowmaodie.zjutbookingsystem.common.Result;
 import com.rainbowmaodie.zjutbookingsystem.entity.Announcement;
 import com.rainbowmaodie.zjutbookingsystem.entity.Building;
 import com.rainbowmaodie.zjutbookingsystem.entity.User;
-import com.rainbowmaodie.zjutbookingsystem.entity.VenueAdminBuilding;
+import com.rainbowmaodie.zjutbookingsystem.entity.VenueAdminPermission;
 import com.rainbowmaodie.zjutbookingsystem.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sys")
+@CrossOrigin
 public class SysAdminController {
 
     @Autowired
@@ -25,7 +27,7 @@ public class SysAdminController {
     private BuildingService buildingService;
 
     @Autowired
-    private VenueAdminBuildingService venueAdminBuildingService;
+    private VenueAdminPermissionService venueAdminPermissionService;
 
     @Autowired
     private AnnouncementService announcementService;
@@ -85,10 +87,11 @@ public class SysAdminController {
         return Result.success("删除成功");
     }
 
+    // --- 权限管理 ---
     @GetMapping("/permissions/{adminId}")
-    public Result<List<VenueAdminBuilding>> getAdminPermissions(@PathVariable Long adminId) {
-        return Result.success(venueAdminBuildingService.list(
-                new LambdaQueryWrapper<VenueAdminBuilding>().eq(VenueAdminBuilding::getUserId, adminId)
+    public Result<List<VenueAdminPermission>> getAdminPermissions(@PathVariable Long adminId) {
+        return Result.success(venueAdminPermissionService.list(
+                new LambdaQueryWrapper<VenueAdminPermission>().eq(VenueAdminPermission::getUserId, adminId)
         ));
     }
 
@@ -97,23 +100,21 @@ public class SysAdminController {
         Long adminId = Long.valueOf(data.get("adminId").toString());
         List<Integer> buildingIds = (List<Integer>) data.get("buildingIds");
         
-        // 先删除旧的
-        venueAdminBuildingService.remove(new LambdaQueryWrapper<VenueAdminBuilding>().eq(VenueAdminBuilding::getUserId, adminId));
+        // 先删除旧的楼宇权限 (由于目前前端只传了buildingIds，我们先只处理BUILDING类型的权限)
+        venueAdminPermissionService.remove(new LambdaQueryWrapper<VenueAdminPermission>()
+                .eq(VenueAdminPermission::getUserId, adminId)
+                .eq(VenueAdminPermission::getTargetType, "BUILDING"));
         
         // 插入新的
         for (Integer bId : buildingIds) {
-            VenueAdminBuilding vab = new VenueAdminBuilding();
-            vab.setUserId(adminId);
-            vab.setBuildingId(Long.valueOf(bId));
-            venueAdminBuildingService.save(vab);
+            VenueAdminPermission vap = new VenueAdminPermission();
+            vap.setUserId(adminId);
+            vap.setTargetType("BUILDING");
+            vap.setTargetId(bId.toString());
+            venueAdminPermissionService.save(vap);
         }
         return Result.success("分配成功");
     }
 
-    // --- 公告管理 ---
-    @PostMapping("/announcements/publish")
-    public Result<String> publishAnnouncement(@RequestBody Announcement announcement) {
-        announcementService.save(announcement);
-        return Result.success("发布成功");
-    }
+    // --- 公告管理功能已迁移至 AnnouncementController ---
 }
