@@ -40,10 +40,14 @@ public class SysAdminController {
     public Result<Page<User>> getUserPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String role) {
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
-            queryWrapper.like(User::getUsername, keyword).or().like(User::getRealName, keyword);
+            queryWrapper.and(w -> w.like(User::getUsername, keyword).or().like(User::getRealName, keyword));
+        }
+        if (role != null && !role.isEmpty()) {
+            queryWrapper.eq(User::getRole, role);
         }
         return Result.success(userService.page(new Page<>(current, size), queryWrapper));
     }
@@ -98,8 +102,9 @@ public class SysAdminController {
     @PostMapping("/permissions/assign")
     public Result<String> assignPermission(@RequestBody Map<String, Object> data) {
         Long adminId = Long.valueOf(data.get("adminId").toString());
-        List<Integer> buildingIds = (List<Integer>) data.get("buildingIds");
+        List<Map<String, String>> permissions = (List<Map<String, String>>) data.get("permissions");
         
+<<<<<<< HEAD
         // 先删除旧的楼宇权限 (由于目前前端只传了buildingIds，我们先只处理BUILDING类型的权限)
         venueAdminPermissionService.remove(new LambdaQueryWrapper<VenueAdminPermission>()
                 .eq(VenueAdminPermission::getUserId, adminId)
@@ -117,4 +122,22 @@ public class SysAdminController {
     }
 
     // --- 公告管理功能已迁移至 AnnouncementController ---
+=======
+        // 先删除该管理员的所有旧权限
+        venueAdminPermissionService.remove(new LambdaQueryWrapper<VenueAdminPermission>()
+                .eq(VenueAdminPermission::getUserId, adminId));
+        
+        // 批量插入新的层级化权限 (校区/楼宇/场地)
+        if (permissions != null && !permissions.isEmpty()) {
+            for (Map<String, String> p : permissions) {
+                VenueAdminPermission vap = new VenueAdminPermission();
+                vap.setUserId(adminId);
+                vap.setTargetType(p.get("targetType"));
+                vap.setTargetId(p.get("targetId"));
+                venueAdminPermissionService.save(vap);
+            }
+        }
+        return Result.success("分配成功");
+    }
+>>>>>>> a2840f37e8f092479cd8bd5204eccbb4ea5d42b0
 }

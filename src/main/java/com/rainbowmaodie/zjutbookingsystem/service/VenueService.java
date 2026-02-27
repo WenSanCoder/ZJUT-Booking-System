@@ -9,5 +9,5 @@ import java.time.LocalDateTime;
 public interface VenueService extends IService<Venue> {
     void lockVenue(Long venueId, LocalDateTime startTime, LocalDateTime endTime, String reason);
 
-    Page<Venue> getVenuePage(Page<Venue> page, String name, Long adminId);
+    Page<Venue> getVenuePage(Page<Venue> page, String name, Long buildingId, Long adminId);
 }

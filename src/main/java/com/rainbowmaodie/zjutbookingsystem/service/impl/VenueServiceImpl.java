@@ -44,10 +44,13 @@ public class VenueServiceImpl extends ServiceImpl<VenueMapper, Venue> implements
     private BuildingMapper buildingMapper;
 
     @Override
-    public Page<Venue> getVenuePage(Page<Venue> page, String name, Long adminId) {
+    public Page<Venue> getVenuePage(Page<Venue> page, String name, Long buildingId, Long adminId) {
         LambdaQueryWrapper<Venue> queryWrapper = new LambdaQueryWrapper<>();
         if (name != null && !name.isEmpty()) {
             queryWrapper.like(Venue::getName, name);
+        }
+        if (buildingId != null) {
+            queryWrapper.eq(Venue::getBuildingId, buildingId);
         }
 
         User user = userService.getById(adminId);

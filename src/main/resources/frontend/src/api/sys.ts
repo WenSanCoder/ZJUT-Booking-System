@@ -68,4 +68,15 @@ export function assignPermissions(data: any) {
   });
 }
 
+<<<<<<< HEAD
+=======
+export function addPermission(data: any) {
+  return request({
+    url: '/sys/permissions/add',
+    method: 'post',
+    data
+  });
+}
+
+>>>>>>> a2840f37e8f092479cd8bd5204eccbb4ea5d42b0
 // --- 公告管理功能已迁移至 announcement.ts ---
