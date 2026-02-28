@@ -71,7 +71,11 @@
             <el-table-column prop="name" label="名称" width="110" show-overflow-tooltip />
             <el-table-column prop="type" label="类型" width="85">
               <template #default="scope">
-                <el-tag size="small" type="info">{{ scope.row.type }}</el-tag>
+                <el-tag size="small" type="info">
+                  {{ scope.row.type === 'SEMINAR' ? '研讨室' : 
+                     scope.row.type === 'STADIUM' ? '体育场馆' : 
+                     scope.row.type === 'HALL' ? '报告厅' : scope.row.type }}
+                </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="address" label="位置" width="120" show-overflow-tooltip />
@@ -144,12 +148,9 @@
         </el-form-item>
         <el-form-item label="类型">
           <el-select v-model="venueForm.type" placeholder="请选择类型" style="width: 100%">
-            <el-option label="普通教室" value="普通教室" />
-            <el-option label="实验室" value="实验室" />
-            <el-option label="报告厅" value="报告厅" />
-            <el-option label="会议室" value="会议室" />
-            <el-option label="体育场馆" value="体育场馆" />
-            <el-option label="其他" value="其他" />
+            <el-option label="研讨室" value="SEMINAR" />
+            <el-option label="体育场馆" value="STADIUM" />
+            <el-option label="报告厅" value="HALL" />
           </el-select>
         </el-form-item>
         <el-form-item label="详细位置">
@@ -307,7 +308,7 @@ const venueForm = reactive({
   buildingId: 0, 
   name: '', 
   address: '', 
-  type: '普通教室', 
+  type: 'SEMINAR', 
   capacity: 30, 
   equipment: '',
   imageUrl: '',
@@ -321,7 +322,7 @@ const handleVenueAdd = () => {
     buildingId: currentBuilding.value.id, 
     name: '', 
     address: '', 
-    type: '普通教室', 
+    type: 'SEMINAR', 
     capacity: 30, 
     equipment: '',
     imageUrl: '',

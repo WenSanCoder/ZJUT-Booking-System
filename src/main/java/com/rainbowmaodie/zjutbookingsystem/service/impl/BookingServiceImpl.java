@@ -7,6 +7,7 @@ import com.rainbowmaodie.zjutbookingsystem.entity.Booking;
 import com.rainbowmaodie.zjutbookingsystem.entity.User;
 import com.rainbowmaodie.zjutbookingsystem.entity.VenueAdminPermission;
 import com.rainbowmaodie.zjutbookingsystem.entity.Building;
+import com.rainbowmaodie.zjutbookingsystem.entity.Venue;
 import com.rainbowmaodie.zjutbookingsystem.mapper.BookingMapper;
 import com.rainbowmaodie.zjutbookingsystem.mapper.VenueAdminPermissionMapper;
 import com.rainbowmaodie.zjutbookingsystem.mapper.BuildingMapper;

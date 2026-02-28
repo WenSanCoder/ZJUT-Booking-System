@@ -28,7 +28,11 @@
         <el-table-column prop="name" label="名称" />
         <el-table-column prop="type" label="类型" width="120">
           <template #default="scope">
-            <el-tag v-if="scope.row.isVenue" size="small">{{ scope.row.type }}</el-tag>
+            <el-tag v-if="scope.row.isVenue" size="small">
+              {{ scope.row.type === 'SEMINAR' ? '研讨室' : 
+                 scope.row.type === 'STADIUM' ? '体育场馆' : 
+                 scope.row.type === 'HALL' ? '报告厅' : scope.row.type }}
+            </el-tag>
             <el-tag v-else-if="scope.row.isBuilding" type="warning" size="small">楼宇</el-tag>
             <el-tag v-else type="info" size="small">校区</el-tag>
           </template>
@@ -89,9 +93,9 @@
         </el-form-item>
         <el-form-item label="场地类型">
           <el-select v-model="venueForm.type" placeholder="请选择">
-            <el-option label="报告厅" value="报告厅" />
-            <el-option label="体育场" value="体育场" />
-            <el-option label="研讨室" value="研讨室" />
+            <el-option label="研讨室" value="SEMINAR" />
+            <el-option label="体育场馆" value="STADIUM" />
+            <el-option label="报告厅" value="HALL" />
           </el-select>
         </el-form-item>
         <el-form-item label="详细位置">
@@ -255,7 +259,7 @@ const venueForm = reactive({
   id: undefined,
   name: '',
   buildingId: undefined,
-  type: '',
+  type: 'SEMINAR',
   address: '',
   capacity: 0,
   equipment: '',
@@ -263,7 +267,7 @@ const venueForm = reactive({
 });
 
 const handleAdd = () => {
-  Object.assign(venueForm, { id: undefined, name: '', buildingId: undefined, type: '', address: '', capacity: 0, equipment: '', status: 0 });
+  Object.assign(venueForm, { id: undefined, name: '', buildingId: undefined, type: 'SEMINAR', address: '', capacity: 0, equipment: '', status: 0 });
   dialogVisible.value = true;
 };
 
