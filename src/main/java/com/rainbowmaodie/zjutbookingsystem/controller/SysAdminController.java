@@ -3,7 +3,6 @@ package com.rainbowmaodie.zjutbookingsystem.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rainbowmaodie.zjutbookingsystem.common.Result;
-import com.rainbowmaodie.zjutbookingsystem.entity.Announcement;
 import com.rainbowmaodie.zjutbookingsystem.entity.Building;
 import com.rainbowmaodie.zjutbookingsystem.entity.User;
 import com.rainbowmaodie.zjutbookingsystem.entity.VenueAdminPermission;
@@ -11,7 +10,6 @@ import com.rainbowmaodie.zjutbookingsystem.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -28,9 +26,6 @@ public class SysAdminController {
 
     @Autowired
     private VenueAdminPermissionService venueAdminPermissionService;
-
-    @Autowired
-    private AnnouncementService announcementService;
 
     @Autowired
     private NotificationService notificationService;
@@ -102,6 +97,7 @@ public class SysAdminController {
     @PostMapping("/permissions/assign")
     public Result<String> assignPermission(@RequestBody Map<String, Object> data) {
         Long adminId = Long.valueOf(data.get("adminId").toString());
+        @SuppressWarnings("unchecked")
         List<Map<String, String>> permissions = (List<Map<String, String>>) data.get("permissions");
         
         // 先删除该管理员的所有旧权限
