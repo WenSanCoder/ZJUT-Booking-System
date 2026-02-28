@@ -2,39 +2,6 @@
   <div class="structure-mgmt-container">
     <el-row :gutter="20">
       <!-- 校区/校级管理 -->
-<<<<<<< HEAD
-      <el-col :span="6">
-        <el-card>
-          <template #header>
-            <div class="header-actions">
-              <span>校区列表</span>
-            </div>
-          </template>
-          <div 
-            v-for="campus in campuses" 
-            :key="campus" 
-            class="campus-item"
-            :class="{ active: currentCampus === campus }"
-            @click="handleCampusChange(campus)"
-          >
-            {{ campus }}
-          </div>
-        </el-card>
-      </el-col>
-
-      <!-- 楼宇管理 -->
-      <el-col :span="8">
-        <el-card>
-          <template #header>
-            <div class="header-actions">
-              <span>{{ currentCampus }} - 楼宇列表</span>
-              <el-button type="primary" size="small" @click="handleBuildingAdd">新增楼宇</el-button>
-            </div>
-          </template>
-          <el-table :data="filteredBuildings" highlight-current-row @current-change="handleBuildingChange">
-            <el-table-column prop="name" label="名称" />
-            <el-table-column label="操作" width="100">
-=======
       <el-col :span="4">
         <el-card>
           <template #header>
@@ -75,7 +42,6 @@
           >
             <el-table-column prop="name" label="楼宇名称" show-overflow-tooltip />
             <el-table-column label="操作" width="160">
->>>>>>> a2840f37e8f092479cd8bd5204eccbb4ea5d42b0
               <template #default="scope">
                 <el-button link type="primary" @click.stop="handleBuildingEdit(scope.row)">编辑</el-button>
                 <el-button link type="primary" @click.stop="openAssignDialog('BUILDING', scope.row.id)">授权</el-button>
@@ -87,20 +53,6 @@
       </el-col>
 
       <!-- 场地/教室管理 -->
-<<<<<<< HEAD
-      <el-col :span="10">
-        <el-card>
-          <template #header>
-            <div class="header-actions">
-              <span>{{ currentBuilding ? currentBuilding.name : '请选择楼宇' }} - 教室列表</span>
-              <el-button :disabled="!currentBuilding" type="success" size="small" @click="handleVenueAdd">新增教室</el-button>
-            </div>
-          </template>
-          <el-table :data="venues">
-            <el-table-column prop="name" label="名称" />
-            <el-table-column prop="location" label="位置" />
-            <el-table-column label="操作" width="120">
-=======
       <el-col :span="13">
         <el-card>
           <template #header>
@@ -122,10 +74,9 @@
                 <el-tag size="small" type="info">{{ scope.row.type }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="location" label="位置" width="120" show-overflow-tooltip />
+            <el-table-column prop="address" label="位置" width="120" show-overflow-tooltip />
             <el-table-column prop="capacity" label="容量" width="65" />
             <el-table-column label="操作" width="160" fixed="right">
->>>>>>> a2840f37e8f092479cd8bd5204eccbb4ea5d42b0
               <template #default="scope">
                 <el-button link type="primary" @click="handleVenueEdit(scope.row)">编辑</el-button>
                 <el-button link type="primary" @click="openAssignDialog('VENUE', scope.row.id)">授权</el-button>
@@ -168,16 +119,11 @@
           <el-input v-model="buildingForm.name" placeholder="例如：存中楼" />
         </el-form-item>
         <el-form-item label="所属校区">
-<<<<<<< HEAD
-          <el-select v-model="buildingForm.location">
-            <el-option v-for="c in campuses" :key="c" :label="c" :value="c" />
-=======
           <el-select v-model="buildingForm.location" placeholder="请选择校区" style="width: 100%">
             <el-option label="朝晖校区" value="朝晖校区" />
             <el-option label="屏峰校区" value="屏峰校区" />
             <el-option label="莫干山校区" value="莫干山校区" />
             <el-option label="之江学院" value="之江学院" />
->>>>>>> a2840f37e8f092479cd8bd5204eccbb4ea5d42b0
           </el-select>
         </el-form-item>
       </el-form>
@@ -194,9 +140,6 @@
           <el-input :value="currentBuilding?.name" disabled />
         </el-form-item>
         <el-form-item label="教室名称">
-<<<<<<< HEAD
-          <el-input v-model="venueForm.name" />
-=======
           <el-input v-model="venueForm.name" placeholder="例如：一号报告厅" />
         </el-form-item>
         <el-form-item label="类型">
@@ -208,10 +151,9 @@
             <el-option label="体育场馆" value="体育场馆" />
             <el-option label="其他" value="其他" />
           </el-select>
->>>>>>> a2840f37e8f092479cd8bd5204eccbb4ea5d42b0
         </el-form-item>
         <el-form-item label="详细位置">
-          <el-input v-model="venueForm.location" placeholder="如：101室" />
+          <el-input v-model="venueForm.address" placeholder="如：101室" />
         </el-form-item>
         <el-form-item label="容量">
           <el-input-number v-model="venueForm.capacity" :min="1" />
@@ -243,131 +185,13 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { getBuildingList, saveBuilding, deleteBuilding, getUserPage, addPermission } from '@/api/sys';
 import { getVenuePage, saveVenue, deleteVenue } from '@/api/admin';
 
-<<<<<<< HEAD
-=======
 // 基础定义
->>>>>>> a2840f37e8f092479cd8bd5204eccbb4ea5d42b0
 const campuses = ['朝晖校区', '屏峰校区', '莫干山校区', '之江学院'];
 const currentCampus = ref('朝晖校区');
 const buildings = ref<any[]>([]);
 const venues = ref<any[]>([]);
 const currentBuilding = ref<any>(null);
 
-<<<<<<< HEAD
-const filteredBuildings = computed(() => {
-  return buildings.value.filter(b => b.location === currentCampus.value);
-});
-
-const handleCampusChange = (campus: string) => {
-  currentCampus.value = campus;
-  currentBuilding.value = null;
-  venues.value = [];
-};
-
-const handleBuildingChange = (row: any) => {
-  if (row) {
-    currentBuilding.value = row;
-    fetchVenues(row.id);
-  }
-};
-
-const fetchBuildings = async () => {
-  const res: any = await getBuildingList();
-  if (res.code === 200) {
-    buildings.value = res.data;
-  }
-};
-
-const buildingDialog = ref(false);
-const buildingForm = reactive({ id: null, name: '', location: '' });
-
-const handleBuildingAdd = () => {
-  buildingForm.id = null;
-  buildingForm.name = '';
-  buildingForm.location = currentCampus.value;
-  buildingDialog.value = true;
-};
-
-const handleBuildingEdit = (row: any) => {
-  Object.assign(buildingForm, row);
-  buildingDialog.value = true;
-};
-
-const submitBuilding = async () => {
-  const res: any = await saveBuilding(buildingForm);
-  if (res.code === 200) {
-    ElMessage.success('保存成功');
-    buildingDialog.value = false;
-    fetchBuildings();
-  }
-};
-
-const handleBuildingDelete = (id: number) => {
-  ElMessageBox.confirm('确定删除该楼宇吗？').then(async () => {
-    const res: any = await deleteBuilding(id);
-    if (res.code === 200) {
-      ElMessage.success('删除成功');
-      fetchBuildings();
-    }
-  });
-};
-
-const venueDialog = ref(false);
-const venueForm = reactive({ id: null, buildingId: 0, name: '', location: '', type: '教室', capacity: 0 });
-
-const handleVenueAdd = () => {
-  if (!currentBuilding.value) return;
-  Object.assign(venueForm, { id: null, buildingId: currentBuilding.value.id, name: '', location: '', type: '教室', capacity: 0 });
-  venueDialog.value = true;
-};
-
-const handleVenueEdit = (row: any) => {
-  Object.assign(venueForm, row);
-  venueDialog.value = true;
-};
-
-const submitVenue = async () => {
-  const res: any = await saveVenue(venueForm);
-  if (res.code === 200) {
-    ElMessage.success('保存成功');
-    venueDialog.value = false;
-    fetchVenues(currentBuilding.value.id);
-  }
-};
-
-const handleVenueDelete = (id: number) => {
-  ElMessageBox.confirm('确定删除该教室吗？').then(async () => {
-    const res: any = await deleteVenue(id);
-    if (res.code === 200) {
-      ElMessage.success('删除成功');
-      fetchVenues(currentBuilding.value.id);
-    }
-  });
-};
-
-onMounted(() => {
-  fetchBuildings();
-});
-</script>
-
-<style scoped>
-.structure-mgmt-container { padding: 20px; }
-.header-actions { display: flex; justify-content: space-between; align-items: center; }
-.campus-item {
-  padding: 12px 15px;
-  cursor: pointer;
-  border-radius: 4px;
-  margin-bottom: 5px;
-  transition: all 0.3s;
-}
-.campus-item:hover { background-color: #f5f7fa; color: #409eff; }
-.campus-item.active { background-color: #ecf5ff; color: #409eff; font-weight: bold; }
-</style>const currentBuilding = ref<any>(null);
-
-const fetchData = async () => {
-  const res: any = await getBuildingList();
-  if (res.code === 200) buildings.value = res.data;
-=======
 // 授权管理相关
 const assignDialogVisible = ref(false);
 const venueAdmins = ref<any[]>([]);
@@ -386,7 +210,6 @@ const openAssignDialog = async (type: string, id: any) => {
     }
   }
   assignDialogVisible.value = true;
->>>>>>> a2840f37e8f092479cd8bd5204eccbb4ea5d42b0
 };
 
 const submitAssign = async () => {
@@ -394,7 +217,7 @@ const submitAssign = async () => {
   const res: any = await addPermission({
     adminId: selectedAdminId.value,
     targetType: assignTarget.type,
-    targetId: String(assignTarget.id)
+    targetId: `${assignTarget.type}:${assignTarget.id}`
   });
   if (res.code === 200) {
     ElMessage.success('授权管辖范围成功');
@@ -483,7 +306,7 @@ const venueForm = reactive({
   id: null as any, 
   buildingId: 0, 
   name: '', 
-  location: '', 
+  address: '', 
   type: '普通教室', 
   capacity: 30, 
   equipment: '',
@@ -497,7 +320,7 @@ const handleVenueAdd = () => {
     id: null, 
     buildingId: currentBuilding.value.id, 
     name: '', 
-    location: '', 
+    address: '', 
     type: '普通教室', 
     capacity: 30, 
     equipment: '',
@@ -513,7 +336,7 @@ const handleVenueEdit = (row: any) => {
 };
 
 const submitVenue = async () => {
-  if(!venueForm.name || !venueForm.location) return ElMessage.warning('请填写完整信息');
+  if(!venueForm.name || !venueForm.address) return ElMessage.warning('请填写完整信息');
   const res: any = await saveVenue(venueForm);
   if (res.code === 200) {
     ElMessage.success('保存教室成功');

@@ -14,7 +14,7 @@
         </el-upload>
         <div class="upload-tip">请上传一张背景透明的 PNG 签名照片</div>
         <p class="desc">该图片将用于生成 PDF 凭证时的自动化 iText 插入点。</p>
-        <el-button type="primary" @click="saveSignature" :disabled="!newFile">保存上传</img-button>
+        <el-button type="primary" @click="saveSignature" :disabled="!newFile">保存上传</el-button>
       </div>
     </el-card>
 

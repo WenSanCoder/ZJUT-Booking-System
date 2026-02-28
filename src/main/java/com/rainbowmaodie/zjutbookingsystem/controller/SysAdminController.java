@@ -104,25 +104,6 @@ public class SysAdminController {
         Long adminId = Long.valueOf(data.get("adminId").toString());
         List<Map<String, String>> permissions = (List<Map<String, String>>) data.get("permissions");
         
-<<<<<<< HEAD
-        // 先删除旧的楼宇权限 (由于目前前端只传了buildingIds，我们先只处理BUILDING类型的权限)
-        venueAdminPermissionService.remove(new LambdaQueryWrapper<VenueAdminPermission>()
-                .eq(VenueAdminPermission::getUserId, adminId)
-                .eq(VenueAdminPermission::getTargetType, "BUILDING"));
-        
-        // 插入新的
-        for (Integer bId : buildingIds) {
-            VenueAdminPermission vap = new VenueAdminPermission();
-            vap.setUserId(adminId);
-            vap.setTargetType("BUILDING");
-            vap.setTargetId(bId.toString());
-            venueAdminPermissionService.save(vap);
-        }
-        return Result.success("分配成功");
-    }
-
-    // --- 公告管理功能已迁移至 AnnouncementController ---
-=======
         // 先删除该管理员的所有旧权限
         venueAdminPermissionService.remove(new LambdaQueryWrapper<VenueAdminPermission>()
                 .eq(VenueAdminPermission::getUserId, adminId));
@@ -139,5 +120,19 @@ public class SysAdminController {
         }
         return Result.success("分配成功");
     }
->>>>>>> a2840f37e8f092479cd8bd5204eccbb4ea5d42b0
+
+    @PostMapping("/permissions/add")
+    public Result<String> addPermission(@RequestBody Map<String, Object> data) {
+        Long adminId = Long.valueOf(data.get("adminId").toString());
+        String targetType = (String) data.get("targetType");
+        String targetId = (String) data.get("targetId");
+
+        VenueAdminPermission vap = new VenueAdminPermission();
+        vap.setUserId(adminId);
+        vap.setTargetType(targetType);
+        vap.setTargetId(targetId);
+        venueAdminPermissionService.save(vap);
+        
+        return Result.success("授权成功");
+    }
 }

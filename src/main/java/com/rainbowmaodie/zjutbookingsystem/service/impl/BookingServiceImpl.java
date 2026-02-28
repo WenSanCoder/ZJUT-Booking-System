@@ -52,9 +52,14 @@ public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> impl
                 List<String> campuses = new ArrayList<>();
                 for (VenueAdminPermission p : permissions) {
                     try {
-                        if ("VENUE".equals(p.getTargetType())) venueIds.add(Long.valueOf(p.getTargetId()));
-                        else if ("BUILDING".equals(p.getTargetType())) buildingIds.add(Long.valueOf(p.getTargetId()));
-                        else if ("CAMPUS".equals(p.getTargetType())) campuses.add(p.getTargetId());
+                        String targetId = p.getTargetId();
+                        if ("VENUE".equals(p.getTargetType())) {
+                            venueIds.add(Long.valueOf(targetId.replace("VENUE:", "")));
+                        } else if ("BUILDING".equals(p.getTargetType())) {
+                            buildingIds.add(Long.valueOf(targetId.replace("BUILDING:", "")));
+                        } else if ("CAMPUS".equals(p.getTargetType())) {
+                            campuses.add(targetId.replace("CAMPUS:", ""));
+                        }
                     } catch (NumberFormatException e) {
                         // 忽略格式错误的ID
                     }
@@ -89,6 +94,9 @@ public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> impl
 
     @Override
     public void reject(Long id, String reason) {
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new RuntimeException("驳回申请必须填写理由");
+        }
         Booking booking = this.getById(id);
         if (booking == null) throw new RuntimeException("预约记录不存在");
         booking.setStatus("REJECTED");

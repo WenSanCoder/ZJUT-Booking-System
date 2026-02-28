@@ -15,7 +15,7 @@ public class Venue {
     private String name;
     private Long buildingId;
     private String type;
-    private String location;
+    private String address;
     private Integer capacity;
     private String imageUrl;
     private String equipment;

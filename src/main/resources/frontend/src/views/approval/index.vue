@@ -59,6 +59,7 @@
         <p><strong>申请人：</strong>{{ currentRecord.applicantName }} ({{ currentRecord.applicantId }})</p>
         <p><strong>联系方式：</strong>{{ currentRecord.phone }}</p>
         <p><strong>活动内容：</strong>{{ currentRecord.remark }}</p>
+        <p v-if="currentRecord.status === 'REJECTED'"><strong>驳回理由：</strong><span style="color: #f56c6c">{{ currentRecord.rejectReason }}</span></p>
         <p><strong>策划书：</strong><el-link type="primary" :href="currentRecord.planUrl" target="_blank">点击查看策划书.pdf</el-link></p>
       </div>
       <template #footer>
@@ -152,7 +153,7 @@ const handleAction = (row: any, action: 'approve' | 'reject') => {
       inputPattern: /\S+/,
       inputErrorMessage: '驳回原因不能为空'
     }).then(async ({ value }) => {
-      const res: any = await rejectBooking(row.id, value);
+      const res: any = await rejectBooking(row.id, { reason: value });
       if (res.code === 200) {
         ElMessage.success('已驳回并推送消息给学生');
         fetchData();
