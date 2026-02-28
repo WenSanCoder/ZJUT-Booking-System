@@ -56,15 +56,30 @@
     <!-- 详情弹窗 -->
     <el-dialog v-model="detailVisible" title="申请详情" width="600px">
       <div v-if="currentRecord" class="detail-content">
-        <p><strong>申请人：</strong>{{ currentRecord.applicantName }} ({{ currentRecord.applicantId }})</p>
-        <p><strong>联系方式：</strong>{{ currentRecord.phone }}</p>
-        <p><strong>活动内容：</strong>{{ currentRecord.remark }}</p>
-        <p v-if="currentRecord.status === 'REJECTED'"><strong>驳回理由：</strong><span style="color: #f56c6c">{{ currentRecord.rejectReason }}</span></p>
-        <p><strong>策划书：</strong><el-link type="primary" :href="currentRecord.planUrl" target="_blank">点击查看策划书.pdf</el-link></p>
+        <el-descriptions :column="1" border>
+          <el-descriptions-item label="活动名称">{{ currentRecord.activityName }}</el-descriptions-item>
+          <el-descriptions-item label="申请人">{{ currentRecord.applicantName }} ({{ currentRecord.applicantUsername }})</el-descriptions-item>
+          <el-descriptions-item label="组织单位">{{ currentRecord.organizer }}</el-descriptions-item>
+          <el-descriptions-item label="负责人员">{{ currentRecord.contactName || '无' }}</el-descriptions-item>
+          <el-descriptions-item label="联系电话">{{ currentRecord.contactPhone || currentRecord.phone }}</el-descriptions-item>
+          <el-descriptions-item label="预计人数">{{ currentRecord.expectedPeople }}</el-descriptions-item>
+          <el-descriptions-item label="活动内容">{{ currentRecord.description || currentRecord.remark }}</el-descriptions-item>
+          <el-descriptions-item v-if="currentRecord.status === 'REJECTED'" label="驳回理由">
+            <span style="color: #f56c6c">{{ currentRecord.rejectReason }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="附件材料">
+            <el-link v-if="currentRecord.planUrl" type="primary" :href="currentRecord.planUrl" target="_blank">查看策划书</el-link>
+            <span v-else>无</span>
+            <span v-if="currentRecord.attachment" style="margin-left: 10px;">
+              <el-link type="primary" :href="currentRecord.attachment" target="_blank">其他附件</el-link>
+            </span>
+          </el-descriptions-item>
+        </el-descriptions>
       </div>
       <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
         <el-button v-if="currentRecord?.status === 'PENDING'" type="danger" @click="handleAction(currentRecord, 'reject')">驳回申请</el-button>
-        <el-button v-if="currentRecord?.status === 'PENDING'" type="primary" @click="handleAction(currentRecord, 'approve')">通过审核并盖章</el-button>
+        <el-button v-if="currentRecord?.status === 'PENDING'" type="primary" @click="handleAction(currentRecord, 'approve')">通过审核</el-button>
       </template>
     </el-dialog>
   </div>
@@ -153,7 +168,7 @@ const handleAction = (row: any, action: 'approve' | 'reject') => {
       inputPattern: /\S+/,
       inputErrorMessage: '驳回原因不能为空'
     }).then(async ({ value }) => {
-      const res: any = await rejectBooking(row.id, { reason: value });
+      const res: any = await rejectBooking(row.id, { reason: value }, userStore.userInfo?.id);
       if (res.code === 200) {
         ElMessage.success('已驳回并推送消息给学生');
         fetchData();
@@ -162,7 +177,7 @@ const handleAction = (row: any, action: 'approve' | 'reject') => {
     });
   } else {
     ElMessageBox.confirm('确认通过该申请？系统将自动合成带签名的PDF凭证。', '提示').then(async () => {
-      const res: any = await approveBooking(row.id);
+      const res: any = await approveBooking(row.id, userStore.userInfo?.id);
       if (res.code === 200) {
         ElMessage.success('审批通过');
         fetchData();

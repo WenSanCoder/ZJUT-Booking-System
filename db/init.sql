@@ -70,6 +70,13 @@ CREATE TABLE `booking` (
                            `reject_reason` varchar(255) DEFAULT NULL COMMENT '驳回原因',
                            `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                            `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                           `activity_name` varchar(255) DEFAULT NULL COMMENT '活动名称',
+                           `organizer` varchar(255) DEFAULT NULL COMMENT '组织单位',
+                           `expected_people` int(11) DEFAULT NULL COMMENT '预计人数',
+                           `contact_name` varchar(100) DEFAULT NULL COMMENT '联系人',
+                           `contact_phone` varchar(20) DEFAULT NULL COMMENT '联系电话',
+                           `description` text DEFAULT NULL COMMENT '详情',
+                           `attachment` varchar(255) DEFAULT NULL COMMENT '附件URL',
                            PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='预约表';
 

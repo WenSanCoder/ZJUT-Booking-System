@@ -31,9 +31,9 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/approve")
-    public Result<String> approve(@PathVariable Long id) {
+    public Result<String> approve(@PathVariable Long id, @RequestParam(required = false) Long userId) {
         try {
-            bookingService.approve(id);
+            bookingService.approve(id, userId);
             return Result.success("审批通过");
         } catch (Exception e) {
             return Result.error(e.getMessage());
@@ -41,10 +41,10 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/reject")
-    public Result<String> reject(@PathVariable Long id, @RequestBody Map<String, String> data) {
+    public Result<String> reject(@PathVariable Long id, @RequestBody Map<String, String> data, @RequestParam(required = false) Long userId) {
         try {
             String reason = data.get("reason");
-            bookingService.reject(id, reason);
+            bookingService.reject(id, reason, userId);
             return Result.success("已驳回");
         } catch (Exception e) {
             return Result.error(e.getMessage());

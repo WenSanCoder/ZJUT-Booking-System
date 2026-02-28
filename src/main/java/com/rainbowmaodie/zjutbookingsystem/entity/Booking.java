@@ -19,4 +19,11 @@ public class Booking {
     private String rejectReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String activityName;
+    private String organizer;
+    private Integer expectedPeople;
+    private String contactName;
+    private String contactPhone;
+    private String description;
+    private String attachment;
 }
