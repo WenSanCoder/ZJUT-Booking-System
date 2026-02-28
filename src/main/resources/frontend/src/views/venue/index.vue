@@ -233,7 +233,7 @@ const fetchData = async () => {
     });
 
     venues.value = tree;
-    total.value = rawVenues.length;
+    total.value = res.data.total;
   } catch (error) {
     console.error(error);
   } finally {

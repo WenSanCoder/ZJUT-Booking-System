@@ -2,24 +2,26 @@ import request from './request';
 
 export function getBookingPage(params: any) {
   return request({
-    url: '/api/admin/bookings/page',
+    url: '/admin/bookings/page',
     method: 'get',
     params
   });
 }
 
-export function approveBooking(id: number) {
+export function approveBooking(id: number, userId?: number) {
   return request({
-    url: `/api/admin/bookings/${id}/approve`,
-    method: 'post'
+    url: `/admin/bookings/${id}/approve`,
+    method: 'post',
+    params: { userId }
   });
 }
 
-export function rejectBooking(id: number, data: any) {
+export function rejectBooking(id: number, data: any, userId?: number) {
   return request({
-    url: `/api/admin/bookings/${id}/reject`,
+    url: `/admin/bookings/${id}/reject`,
     method: 'post',
-    data
+    data,
+    params: { userId }
   });
 }
 

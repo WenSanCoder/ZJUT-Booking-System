@@ -16,6 +16,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (user == null || !user.getPassword().equals(password)) {
             throw new RuntimeException("用户名或密码错误");
         }
+        if ("STUDENT".equals(user.getRole())) {
+            throw new RuntimeException("无权登录该系统");
+        }
         if (user.getStatus() == 0) {
             throw new RuntimeException("账号已被禁用");
         }

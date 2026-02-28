@@ -19,4 +19,13 @@ public class BookingVO {
     private String planUrl;
     private String rejectReason;
     private LocalDateTime createdAt;
+    
+    // 活动详情 
+    private String activityName;
+    private String organizer;
+    private Integer expectedPeople;
+    private String contactName;
+    private String contactPhone;
+    private String description;
+    private String attachment;
 }
