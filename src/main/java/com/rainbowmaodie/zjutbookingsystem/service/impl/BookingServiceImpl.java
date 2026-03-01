@@ -11,16 +11,22 @@ import com.rainbowmaodie.zjutbookingsystem.entity.Venue;
 import com.rainbowmaodie.zjutbookingsystem.mapper.BookingMapper;
 import com.rainbowmaodie.zjutbookingsystem.mapper.VenueAdminPermissionMapper;
 import com.rainbowmaodie.zjutbookingsystem.mapper.BuildingMapper;
+import com.rainbowmaodie.zjutbookingsystem.mapper.VenueMapper;
 import com.rainbowmaodie.zjutbookingsystem.service.BookingService;
 import com.rainbowmaodie.zjutbookingsystem.service.UserService;
 import com.rainbowmaodie.zjutbookingsystem.vo.BookingVO;
+import com.rainbowmaodie.zjutbookingsystem.common.PdfUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> implements BookingService {
 
@@ -32,6 +38,19 @@ public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> impl
 
     @Autowired
     private BuildingMapper buildingMapper;
+
+    @Autowired
+    private VenueMapper venueMapper;
+
+    @Autowired
+    private PdfUtils pdfUtils;
+
+    @Value("${upload.base-url:http://localhost:8080/uploads/}")
+    private String baseUrl;
+
+    private static final String TEMPLATE_PATH = "C:\\Users\\20979\\IdeaProjects\\ZJUT-Booking-System\\src\\main\\empty.pdf";
+    private static final String PDF_DIR = "C:\\Users\\20979\\Desktop\\200project\\26寒软\\image\\pdf\\";
+    private static final String PUBLIC_PDF_DIR = "/pdf/"; // 假设 uploads 映射到了该目录
 
     @Override
     public Page<BookingVO> getBookingPage(Page<Booking> page, String applicant, String status, String startDate, String endDate, Long userId) {
@@ -102,8 +121,11 @@ public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> impl
         }
 
         booking.setStatus("APPROVED");
+        
+        // 生成 PDF 预约单 (传入管理员ID用于签名)
+        generateBookingPdf(booking, adminId);
+        
         this.updateById(booking);
-        // 这里后续可以添加生成PDF签名凭证的异步任务
     }
 
     @Override
@@ -121,8 +143,41 @@ public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> impl
         this.updateById(booking);
     }
 
-    @Autowired
-    private com.rainbowmaodie.zjutbookingsystem.mapper.VenueMapper venueMapper;
+    private void generateBookingPdf(Booking booking, Long adminId) {
+        User student = userService.getById(booking.getUserId());
+        User admin = userService.getById(adminId);
+        Venue venue = venueMapper.selectById(booking.getVenueId());
+        
+        Map<String, String> data = new HashMap<>();
+        // 根据图片中的文本域 ID 进行映射
+        data.put("UnitBorrower", booking.getOrganizer());
+        data.put("Borrower", student != null ? student.getRealName() : "未知用户");
+        data.put("BorrowerPhone", booking.getContactPhone());
+        data.put("OfficePhone", ""); // 如果有单位电话可以填写
+        
+        String timeStr = booking.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) 
+                  + " 至 " + booking.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        data.put("BorrowTime", timeStr);
+        data.put("BorrowRoom", venue != null ? venue.getName() : "未知场地");
+        data.put("BorrowReason", booking.getActivityName() + " - " + booking.getDescription());
+        data.put("PrintDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+        
+        // 审批人签名和日期
+        if (admin != null) {
+            data.put("Sign", admin.getRealName());
+            data.put("SignTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        }
+
+        String fileName = "booking_" + booking.getId() + "_" + UUID.randomUUID().toString().substring(0, 8) + ".pdf";
+        String outputPath = PDF_DIR + fileName;
+        
+        try {
+            pdfUtils.fillPdfTemplate(TEMPLATE_PATH, outputPath, data);
+            booking.setPdfUrl(baseUrl + "pdf/" + fileName);
+        } catch (Exception e) {
+            log.error("Failed to generate PDF for booking ID: {}", booking.getId(), e);
+        }
+    }
 
     private void checkPermission(Long venueId, Long adminId) {
         if (adminId == null) throw new RuntimeException("请先登录");

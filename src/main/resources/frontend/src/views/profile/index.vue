@@ -27,7 +27,7 @@ import { ref, watch } from 'vue';
 import { useUserStore } from '@/store/user';
 import { ElMessage } from 'element-plus';
 import SignatureUpload from '@/components/SignatureUpload.vue';
-import axios from 'axios';
+import request from '@/api/request';
 
 const userStore = useUserStore();
 const signaturePath = ref(userStore.userInfo?.signatureUrl || '');
@@ -42,7 +42,7 @@ const handleUploadSuccess = async (data: any) => {
   
   try {
     // 调用更新数据库接口
-    await axios.post('/api/users/signature', {
+    await request.post('/users/signature', {
       userId: userStore.userInfo.id,
       signatureUrl: data.path
     });

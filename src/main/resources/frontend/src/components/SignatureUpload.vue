@@ -48,9 +48,9 @@
 import { ref, defineProps, defineEmits } from 'vue'
 import { Plus, Delete, Edit } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import 'vue-cropper/next/dist/index.css'
+import 'vue-cropper/dist/index.css'
 import { VueCropper } from 'vue-cropper'
-import axios from 'axios'
+import request from '@/api/request'
 
 const props = defineProps({
   modelValue: String // Existing image URL or path
@@ -77,7 +77,7 @@ const handleFileChange = (file: any) => {
   const reader = new FileReader()
   reader.onload = (e: any) => {
     console.log('File read success')
-    cropImg.value = e.target.result
+    cropImg.value = e.target.result as string
     dialogVisible.value = true
   }
   reader.onerror = (err) => {
@@ -100,7 +100,11 @@ const handleUpload = () => {
     
     uploading.value = true
     try {
-      const res = await axios.post('/api/upload/signature', formData)
+      const res = await request.post('/upload/signature', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
       imageUrl.value = res.data.url
       emit('update:modelValue', res.data.path)
       emit('upload-success', res.data)
@@ -121,7 +125,7 @@ const handleRemove = async () => {
   const path = props.modelValue
   try {
     if (path) {
-      await axios.delete('/api/upload/delete', { params: { path } })
+      await request.delete('/upload/delete', { params: { path } })
     }
     imageUrl.value = ''
     emit('update:modelValue', '')

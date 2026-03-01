@@ -1,9 +1,9 @@
 package com.rainbowmaodie.zjutbookingsystem.controller;
 
+import com.rainbowmaodie.zjutbookingsystem.common.Result;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,14 +28,14 @@ public class UploadController {
      * Upload Venue Image (1:1 ratio, compress to 800x800)
      */
     @PostMapping("/venue")
-    public ResponseEntity<Map<String, Object>> uploadVenueImage(@RequestParam("file") MultipartFile file) {
+    public Result<Map<String, Object>> uploadVenueImage(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(error("File is empty"));
+            return Result.error("File is empty");
         }
 
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null) {
-            return ResponseEntity.badRequest().body(error("Invalid filename"));
+            return Result.error("Invalid filename");
         }
 
         try {
@@ -60,11 +60,11 @@ public class UploadController {
             data.put("url", baseUrl + "venues/" + fileName);
             data.put("path", "venues/" + fileName);
             
-            return ResponseEntity.ok(data);
+            return Result.success(data);
 
         } catch (IOException e) {
             log.error("Failed to upload venue image", e);
-            return ResponseEntity.status(500).body(error("Server error: " + e.getMessage()));
+            return Result.error("Server error: " + e.getMessage());
         }
     }
 
@@ -72,19 +72,19 @@ public class UploadController {
      * Upload signature image (PNG, 300x100)
      */
     @PostMapping("/signature")
-    public ResponseEntity<Map<String, Object>> uploadSignature(@RequestParam("file") MultipartFile file) {
+    public Result<Map<String, Object>> uploadSignature(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(error("File is empty"));
+            return Result.error("File is empty");
         }
 
         // 1. Basic validation
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || !originalFilename.toLowerCase().endsWith(".png")) {
-            return ResponseEntity.badRequest().body(error("Only PNG files are allowed"));
+            return Result.error("Only PNG files are allowed");
         }
 
         if (file.getSize() > 1024 * 1024) {
-            return ResponseEntity.badRequest().body(error("File size exceeds 1MB"));
+            return Result.error("File size exceeds 1MB");
         }
 
         try {
@@ -109,11 +109,11 @@ public class UploadController {
             data.put("url", baseUrl + "signatures/" + fileName);
             data.put("path", "signatures/" + fileName); // For DB storage
             
-            return ResponseEntity.ok(data);
+            return Result.success(data);
 
         } catch (IOException e) {
             log.error("Failed to upload signature", e);
-            return ResponseEntity.status(500).body(error("Server error: " + e.getMessage()));
+            return Result.error("Server error: " + e.getMessage());
         }
     }
 
@@ -122,34 +122,25 @@ public class UploadController {
      * @param path the relative path (e.g., "venues/uuid.jpg" or "signatures/uuid.png")
      */
     @DeleteMapping("/delete")
-    public ResponseEntity<Map<String, Object>> deleteFile(@RequestParam("path") String path) {
+    public Result<String> deleteFile(@RequestParam("path") String path) {
         if (path == null || path.isEmpty()) {
-            return ResponseEntity.badRequest().body(error("Path is empty"));
+            return Result.error("Path is empty");
         }
 
         // Security check: path must not contain ".." to avoid directory traversal
         if (path.contains("..")) {
-            return ResponseEntity.badRequest().body(error("Invalid path"));
+            return Result.error("Invalid path");
         }
 
         File file = new File(uploadPath, path);
         if (file.exists() && file.isFile()) {
             if (file.delete()) {
-                Map<String, Object> data = new HashMap<>();
-                data.put("message", "File deleted successfully");
-                return ResponseEntity.ok(data);
+                return Result.success("File deleted successfully");
             } else {
-                return ResponseEntity.status(500).body(error("Failed to delete file"));
+                return Result.error("Failed to delete file");
             }
         } else {
-            return ResponseEntity.badRequest().body(error("File does not exist"));
+            return Result.error("File does not exist");
         }
-    }
-
-    private Map<String, Object> error(String msg) {
-        Map<String, Object> res = new HashMap<>();
-        res.put("message", msg);
-        res.put("error", true);
-        return res;
     }
 }

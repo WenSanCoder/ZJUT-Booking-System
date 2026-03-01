@@ -79,6 +79,7 @@ const handleLogout = () => {
 .el-aside {
   background-color: #001529;
   color: #fff;
+  user-select: none; /* 防止频繁点击时选中文字 */
 }
 .logo {
   height: 60px;

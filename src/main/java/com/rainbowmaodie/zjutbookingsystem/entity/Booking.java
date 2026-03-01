@@ -26,4 +26,5 @@ public class Booking {
     private String contactPhone;
     private String description;
     private String attachment;
+    private String pdfUrl;
 }

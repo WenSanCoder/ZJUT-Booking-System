@@ -3,15 +3,15 @@ package com.rainbowmaodie.zjutbookingsystem.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.rainbowmaodie.zjutbookingsystem.common.Result;
-import com.rainbowmaodie.zjutbookingsystem.entity.Building;
-import com.rainbowmaodie.zjutbookingsystem.entity.User;
-import com.rainbowmaodie.zjutbookingsystem.entity.VenueAdminPermission;
+import com.rainbowmaodie.zjutbookingsystem.entity.*;
 import com.rainbowmaodie.zjutbookingsystem.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/sys")
@@ -25,7 +25,16 @@ public class SysAdminController {
     private BuildingService buildingService;
 
     @Autowired
+    private VenueService venueService;
+
+    @Autowired
     private VenueAdminPermissionService venueAdminPermissionService;
+    
+    @Autowired
+    private BookingService bookingService;
+    
+    @Autowired
+    private VenueLockService venueLockService;
 
     @Autowired
     private NotificationService notificationService;
@@ -81,7 +90,35 @@ public class SysAdminController {
     }
 
     @DeleteMapping("/buildings/{id}")
+    @Transactional(rollbackFor = Exception.class)
     public Result<String> deleteBuilding(@PathVariable Long id) {
+        // 获取该楼宇下的所有场地/教室
+        List<Venue> venues = venueService.list(new LambdaQueryWrapper<Venue>().eq(Venue::getBuildingId, id));
+        if (venues != null && !venues.isEmpty()) {
+            List<Long> venueIds = venues.stream().map(Venue::getId).collect(Collectors.toList());
+            
+            // 删除场地对应的锁
+            venueLockService.remove(new LambdaQueryWrapper<VenueLock>().in(VenueLock::getVenueId, venueIds));
+            // 删除场地对应的预约
+            bookingService.remove(new LambdaQueryWrapper<Booking>().in(Booking::getVenueId, venueIds));
+            
+            // 删除场地的权限
+            for (Long vid : venueIds) {
+                venueAdminPermissionService.remove(new LambdaQueryWrapper<VenueAdminPermission>()
+                        .eq(VenueAdminPermission::getTargetType, "VENUE")
+                        .eq(VenueAdminPermission::getTargetId, "VENUE:" + vid));
+            }
+            
+            // 删除场地/教室
+            venueService.removeBatchByIds(venueIds);
+        }
+        
+        // 删除关联的楼宇级管理员权限
+        venueAdminPermissionService.remove(new LambdaQueryWrapper<VenueAdminPermission>()
+                .eq(VenueAdminPermission::getTargetType, "BUILDING")
+                .eq(VenueAdminPermission::getTargetId, "BUILDING:" + id));
+                
+        // 最后删除楼宇
         buildingService.removeById(id);
         return Result.success("删除成功");
     }

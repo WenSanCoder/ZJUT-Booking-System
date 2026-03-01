@@ -8,9 +8,11 @@ import com.rainbowmaodie.zjutbookingsystem.entity.User;
 import com.rainbowmaodie.zjutbookingsystem.entity.Venue;
 import com.rainbowmaodie.zjutbookingsystem.entity.VenueAdminPermission;
 import com.rainbowmaodie.zjutbookingsystem.entity.VenueLock;
+import com.rainbowmaodie.zjutbookingsystem.entity.Booking;
 import com.rainbowmaodie.zjutbookingsystem.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -39,6 +41,9 @@ public class VenueController {
 
     @Autowired
     private VenueLockService venueLockService;
+    
+    @Autowired
+    private BookingService bookingService;
 
     @GetMapping("/page")
     public Result<Page<Venue>> getPage(
@@ -125,6 +130,7 @@ public class VenueController {
     }
 
     @DeleteMapping("/{id}")
+    @Transactional(rollbackFor = Exception.class)
     public Result<String> delete(@PathVariable Long id, @RequestParam(required = false) Long userId) {
         if (userId != null) {
             User user = userService.getById(userId);
@@ -156,6 +162,16 @@ public class VenueController {
                 if (!hasPermission) return Result.error("无权删除该场地");
             }
         }
+        
+        // 删除场地对应的锁
+        venueLockService.remove(new LambdaQueryWrapper<VenueLock>().eq(VenueLock::getVenueId, id));
+        // 删除场地对应的预约
+        bookingService.remove(new LambdaQueryWrapper<Booking>().eq(Booking::getVenueId, id));
+        // 删除关联的管理员权限
+        venueAdminPermissionService.remove(new LambdaQueryWrapper<VenueAdminPermission>()
+                .eq(VenueAdminPermission::getTargetType, "VENUE")
+                .eq(VenueAdminPermission::getTargetId, "VENUE:" + id));
+                
         venueService.removeById(id);
         return Result.success("删除成功");
     }
