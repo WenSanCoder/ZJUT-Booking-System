@@ -36,7 +36,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         user.setPasswordChanged(0);
         user.setStatus(1);
-        user.setCreditScore(100);
+        if ("STUDENT".equals(user.getRole())) {
+            user.setCreditScore(100);
+        } else {
+            user.setCreditScore(null);
+        }
         this.save(user);
     }
 
@@ -48,6 +52,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         user.setPassword(newPassword);
         user.setPasswordChanged(1);
+        this.updateById(user);
+    }
+
+    @Override
+    public void updateSignature(Long userId, String signatureUrl) {
+        User user = new User();
+        user.setId(userId);
+        user.setSignatureUrl(signatureUrl);
         this.updateById(user);
     }
 }

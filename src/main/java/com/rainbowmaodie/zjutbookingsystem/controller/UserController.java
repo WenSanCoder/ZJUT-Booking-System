@@ -66,4 +66,16 @@ public class UserController {
         }
         return Result.error("用户不存在");
     }
+
+    @PostMapping("/signature")
+    public Result<String> updateSignature(@RequestBody Map<String, Object> data) {
+        try {
+            Long userId = Long.valueOf(data.get("userId").toString());
+            String signatureUrl = (String) data.get("signatureUrl");
+            userService.updateSignature(userId, signatureUrl);
+            return Result.success("电子签名更新成功");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
 }

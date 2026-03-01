@@ -128,7 +128,6 @@ public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> impl
         if (adminId == null) throw new RuntimeException("请先登录");
         User user = userService.getById(adminId);
         if (user == null) throw new RuntimeException("管理员用户不存在");
-        if ("SYS_ADMIN".equals(user.getRole())) return; // 系统管理员拥有顶级权限
 
         if (!"VENUE_ADMIN".equals(user.getRole())) {
             throw new RuntimeException("当前用户无权审批预约");

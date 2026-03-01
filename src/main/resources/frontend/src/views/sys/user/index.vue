@@ -17,11 +17,15 @@
         <el-table-column prop="realName" label="姓名" width="120" />
         <el-table-column prop="role" label="角色">
           <template #default="scope">
-            <el-tag :type="getRoleTag(scope.row.role)">{{ scope.row.role }}</el-tag>
+            <el-tag :type="getRoleTag(scope.row.role)">{{ getRoleName(scope.row.role) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="phone" label="电话" />
-        <el-table-column prop="creditScore" label="信用分" width="100" />
+        <el-table-column label="信用分" width="100">
+          <template #default="scope">
+            {{ scope.row.role === 'STUDENT' ? scope.row.creditScore : '-' }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="300">
           <template #default="scope">
             <el-button link type="primary" @click="handleEdit(scope.row)">编辑</el-button>
@@ -185,6 +189,16 @@ const getRoleTag = (role: string) => {
   if (role === 'SYS_ADMIN') return 'danger';
   if (role === 'VENUE_ADMIN') return 'warning';
   return 'info';
+};
+
+const getRoleName = (role: string) => {
+  const map: any = {
+    SYS_ADMIN: '系统管理员',
+    VENUE_ADMIN: '场地管理员',
+    STUDENT: '学生',
+    TEACHER: '教师'
+  };
+  return map[role] || role;
 };
 
 const dialogVisible = ref(false);

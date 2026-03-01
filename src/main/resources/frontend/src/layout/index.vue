@@ -3,16 +3,13 @@
     <el-aside width="200px">
       <div class="logo">{{ userStore.userInfo?.role === 'SYS_ADMIN' ? '系统管理终端' : '场地管理终端' }}</div>
       <el-menu :default-active="route.path" router background-color="#001529" text-color="#fff">
-        <el-menu-item index="/dashboard">
-          <el-icon><DataBoard /></el-icon>
-          <span>数据看板</span>
-        </el-menu-item>
         
-        <!-- 场地管理员 & 系统管理员共有 -->
-        <el-menu-item index="/approval">
+        <!-- 仅场地管理员可见 -->
+        <el-menu-item v-if="userStore.userInfo?.role === 'VENUE_ADMIN'" index="/approval">
           <el-icon><Check /></el-icon>
           <span>审批中心</span>
         </el-menu-item>
+
         <el-menu-item index="/venue">
           <el-icon><Location /></el-icon>
           <span>场地管理</span>

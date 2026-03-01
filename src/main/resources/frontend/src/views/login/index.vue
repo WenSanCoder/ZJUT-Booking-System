@@ -90,7 +90,15 @@ const completeLogin = (user: any) => {
   userStore.setUserInfo(user);
   userStore.setToken('dummy-token-' + user.id);
   ElMessage.success('登录成功');
-  router.push('/dashboard');
+  
+  // 场地管理员重定向到审批中心，系统管理员重定向到账号管理，其他重定向到个人中心
+  if (user.role === 'VENUE_ADMIN') {
+    router.push('/approval');
+  } else if (user.role === 'SYS_ADMIN') {
+    router.push('/sys/user');
+  } else {
+    router.push('/profile');
+  }
 };
 
 const submitPasswordChange = async () => {

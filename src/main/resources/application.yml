@@ -13,6 +13,10 @@ spring:
     url: jdbc:mysql://x6.sjcmc.cn:34095/zjut_booking
     username: remote_user
     password: "@Sht20051229"
+  servlet:
+    multipart:
+      max-file-size: 1MB
+      max-request-size: 1MB
 mybatis-plus:
   mapper-locations: classpath:/mapper/*.xml
   type-aliases-package: com.rainbowmaodie.zjutbookingsystem.entity
@@ -21,3 +25,7 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: auto
+
+upload:
+  path: C:/Users/20979/Desktop/200project/26寒软/image/
+  base-url: http://localhost:${server.port}/uploads/
