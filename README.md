@@ -11,3 +11,7 @@ npm run dev ctrl+左键点击url打开前端页面
 数据库：在application.yml中配置了云服务 也可以启用自己本地的数据库 建表语句在
 
 db\init.sql
+
+后端启动杀进程：
+netstat -ano | findstr :8080
+taskkill /F /PID <进程 PID>

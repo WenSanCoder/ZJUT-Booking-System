@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -44,6 +45,9 @@ public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> impl
 
     @Autowired
     private PdfUtils pdfUtils;
+
+    @Value("${upload.path}")
+    private String uploadPath;
 
     @Value("${upload.base-url:http://localhost:8080/uploads/}")
     private String baseUrl;
@@ -163,8 +167,46 @@ public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> impl
         data.put("PrintDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
         
         // 审批人签名和日期
+        Map<String, String> images = new HashMap<>();
         if (admin != null) {
-            data.put("Sign", admin.getRealName());
+            // 如果签名文本域仍需显示姓名，保留此行；如果只显示图片，可以注释掉
+            // data.put("Sign", admin.getRealName()); 
+            
+            String signatureUrl = admin.getSignatureUrl();
+            System.out.println("DEBUG: [PDF] signatureUrl from DB = " + signatureUrl);
+            
+            if (signatureUrl != null && !signatureUrl.isEmpty()) {
+                // 修复路径拼接逻辑：处理可能的 /api/ 前缀
+                String relativePath = signatureUrl;
+                if (relativePath.startsWith("/api/")) {
+                    relativePath = relativePath.substring(5); // 去掉 /api/
+                }
+                if (relativePath.startsWith("/")) {
+                    relativePath = relativePath.substring(1); // 去掉开头的 /
+                }
+                
+                // 拼接本地绝对路径
+                String localImgPath = uploadPath + relativePath;
+                System.out.println("DEBUG: [PDF] uploadPath context = " + uploadPath);
+                System.out.println("DEBUG: [PDF] relativePath context = " + relativePath);
+                System.out.println("DEBUG: [PDF] Concatenated localImgPath = " + localImgPath);
+                
+                File checkFile = new File(localImgPath);
+                System.out.println("DEBUG: [PDF] Does file exist on disk? " + checkFile.exists());
+                System.out.println("DEBUG: [PDF] Absolute path of File object: " + checkFile.getAbsolutePath());
+                
+                if (checkFile.exists()) {
+                    images.put("Sign", localImgPath);
+                    System.out.println("DEBUG: [PDF] Signature image FOUND on disk.");
+                } else {
+                    System.err.println("DEBUG: [PDF] Signature image NOT FOUND at path: " + localImgPath);
+                    data.put("Sign", admin.getRealName());
+                }
+            } else {
+                System.out.println("DEBUG: [PDF] signatureUrl is NULL or EMPTY");
+                // 如果没有图片，则降级显示文字姓名
+                data.put("Sign", admin.getRealName());
+            }
             data.put("SignTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         }
 
@@ -172,7 +214,7 @@ public class BookingServiceImpl extends ServiceImpl<BookingMapper, Booking> impl
         String outputPath = PDF_DIR + fileName;
         
         try {
-            pdfUtils.fillPdfTemplate(TEMPLATE_PATH, outputPath, data);
+            pdfUtils.fillPdfTemplate(TEMPLATE_PATH, outputPath, data, images);
             booking.setPdfUrl(baseUrl + "pdf/" + fileName);
         } catch (Exception e) {
             log.error("Failed to generate PDF for booking ID: {}", booking.getId(), e);

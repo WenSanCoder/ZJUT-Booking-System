@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="header-actions">
-          <span>管辖场地列表</span>
+          <span class="page-title">管辖场地列表</span>
           <div class="search-bar">
             <el-input 
               v-model="queryParams.name" 
@@ -24,8 +24,15 @@
         border
         default-expand-all
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        :row-class-name="tableRowClassName"
       >
-        <el-table-column prop="name" label="名称" />
+        <el-table-column prop="name" label="名称">
+          <template #default="scope">
+            <span :class="['name-text', getLevelClass(scope.row)]">
+              {{ scope.row.name }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="type" label="类型" width="120">
           <template #default="scope">
             <el-tag v-if="scope.row.isVenue" size="small">
@@ -162,6 +169,19 @@ const queryParams = reactive({
   size: 10,
   name: ''
 });
+
+const getLevelClass = (row: any) => {
+  if (row.isCampus) return 'level-campus';
+  if (row.isBuilding) return 'level-building';
+  if (row.isVenue) return 'level-venue';
+  return '';
+};
+
+const tableRowClassName = ({ row }: { row: any }) => {
+  if (row.isCampus) return 'row-campus';
+  if (row.isBuilding) return 'row-building';
+  return '';
+};
 
 const fetchData = async () => {
   loading.value = true;
@@ -357,6 +377,58 @@ const handleStatus = async (row: any) => {
 </script>
 
 <style scoped>
-.venue-container { padding: 20px; }
-.header-actions { display: flex; justify-content: space-between; align-items: center; }
+.venue-container {
+  padding: 20px;
+}
+
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #303133;
+}
+
+/* 层级字体样式调整 */
+.name-text {
+  transition: all 0.3s;
+}
+
+/* 校区级别：最粗、最大、深色 */
+.level-campus {
+  font-size: 16px;
+  font-weight: 800;
+  color: #303133;
+}
+
+/* 楼宇级别：中等粗细、标准大小 */
+.level-building {
+  font-size: 14px;
+  font-weight: 600;
+  color: #606266;
+}
+
+/* 场地级别：常规粗细 */
+.level-venue {
+  font-size: 14px;
+  font-weight: 400;
+  color: #606266;
+}
+
+/* 行背景区分，增强层次感 */
+:deep(.row-campus) {
+  background-color: #f8fafc !important;
+}
+
+:deep(.row-building) {
+  background-color: #ffffff !important;
+}
+
+.pagination-container {
+  margin-top: 20px;
+}
 </style>

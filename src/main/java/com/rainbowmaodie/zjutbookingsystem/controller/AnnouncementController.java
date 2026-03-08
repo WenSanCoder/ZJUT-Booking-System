@@ -39,7 +39,9 @@ public class AnnouncementController {
         if (title != null && !title.isEmpty()) {
             queryWrapper.like(Announcement::getTitle, title);
         }
-        queryWrapper.orderByDesc(Announcement::getCreatedAt);
+        
+        queryWrapper.orderByDesc(Announcement::getId);
+        
         return Result.success(announcementService.page(new Page<>(current, size), queryWrapper));
     }
 

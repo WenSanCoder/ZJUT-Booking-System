@@ -3,8 +3,19 @@
     <el-card>
       <template #header>
         <div class="header-actions">
-          <span class="title">公告管理</span>
-          <el-button type="primary" @click="openAddDialog">发布公告</el-button>
+          <span class="page-title">公告管理</span>
+          <div class="search-bar">
+            <el-input 
+              v-model="queryParams.title" 
+              placeholder="搜索公告标题" 
+              clearable 
+              style="width: 200px; margin-right: 10px;"
+              @clear="fetchData"
+              @keyup.enter="fetchData"
+            />
+            <el-button type="primary" @click="fetchData">查询</el-button>
+            <el-button type="success" @click="openAddDialog">发布公告</el-button>
+          </div>
         </div>
       </template>
 

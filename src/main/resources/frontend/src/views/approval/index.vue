@@ -2,6 +2,7 @@
   <div class="approval-container">
     <el-card>
       <template #header>
+        <div class="header-title">审批中心</div>
         <div class="search-bar">
           <el-input v-model="queryParams.applicant" placeholder="搜索申请人学号..." style="width: 200px" />
           <el-select v-model="queryParams.status" placeholder="审核状态" clearable style="width: 150px">
@@ -190,6 +191,7 @@ const handleAction = (row: any, action: 'approve' | 'reject') => {
 
 <style scoped>
 .approval-container { padding: 20px; }
+.header-title { font-size: 18px; margin-bottom: 15px; font-weight: bold; color: #303133; }
 .search-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .pagination-container { margin-top: 20px; display: flex; justify-content: flex-end; }
 .detail-content p { margin-bottom: 15px; font-size: 16px; }

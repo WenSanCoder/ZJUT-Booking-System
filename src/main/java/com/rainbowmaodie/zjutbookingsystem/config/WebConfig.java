@@ -16,11 +16,15 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Map /uploads/** to the actual file path
-        String path = new File(uploadPath).getAbsolutePath();
-        if (!path.endsWith(File.separator)) {
+        String path = uploadPath;
+        if (!path.endsWith("/") && !path.endsWith("\\")) {
             path += File.separator;
         }
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + path);
+
+        // Windows 绝对路径映射必须以 file:/// 开头
+        String resourceLocation = "file:///" + path.replace("\\", "/");
+        
+        registry.addResourceHandler("/uploads/**", "/api/uploads/**")
+                .addResourceLocations(resourceLocation);
     }
 }

@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, defineEmits } from 'vue'
+import { ref, watch } from 'vue'
 import { Plus, Delete, Edit } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import 'vue-cropper/dist/index.css'
@@ -58,8 +58,24 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'upload-success', 'delete-success'])
 
-const imageUrl = ref(props.modelValue)
+const imageUrl = ref('')
 const dialogVisible = ref(false)
+
+// Helper to convert DB path to full URL
+const getFullUrl = (path: string | undefined) => {
+  if (!path) return '';
+  if (path.startsWith('http') || path.startsWith('data:')) return path;
+  // 由于我们已修复 Vite 代理映射，现在直接从 5174 发起请求，且后端已支持 /uploads/**
+  return `/api/uploads/${path}`;
+}
+
+// Watch modelValue to sync imageUrl
+watch(() => props.modelValue, (newVal) => {
+  console.log('modelValue changed:', newVal);
+  imageUrl.value = getFullUrl(newVal);
+  console.log('imageUrl updated to:', imageUrl.value);
+}, { immediate: true })
+
 const cropImg = ref('')
 const cropperRef = ref()
 const uploading = ref(false)

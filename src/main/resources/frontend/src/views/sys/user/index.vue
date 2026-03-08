@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="header-actions">
-          <span>全校账号管理</span>
+          <span class="page-title">全校账号管理</span>
           <div class="search-bar">
             <el-input v-model="queryParams.keyword" placeholder="搜索学工号/姓名" clearable style="width: 250px; margin-right: 10px;" @keyup.enter="fetchData" />
             <el-button type="primary" @click="fetchData">查询</el-button>
@@ -284,7 +284,24 @@ const submitPerm = async () => {
 </script>
 
 <style scoped>
-.user-mgmt-container { padding: 20px; }
-.header-actions { display: flex; justify-content: space-between; align-items: center; }
-.search-bar { display: flex; align-items: center; }
+.user-mgmt-container {
+  padding: 20px;
+}
+
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+}
 </style>
